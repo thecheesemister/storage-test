@@ -19,17 +19,8 @@ function submitForm() {
             // Look for a matching username and password pair
             const userFound = data.find(user => user.username === username && user.password === password);
             if (userFound) {
-                // Build the redirect URL based on the entered username
-                let redirectUrl = "https://thecheesemister.github.io/storage-test/storage/";
-                
-                // If username is "nuh", append ".html" at the end; otherwise, use the username as is.
-                if (username === "nuh") {
-                    redirectUrl += username + ".html";
-                } else {
-                    redirectUrl += username;
-                }
-                
-                // Redirect the user
+                // Build the redirect URL by appending username + ".html" to the base URL
+                const redirectUrl = `https://thecheesemister.github.io/storage-test/storage/${username}.html`;
                 window.location.href = redirectUrl;
             } else {
                 alert("Invalid username or password.");
