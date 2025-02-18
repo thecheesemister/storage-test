@@ -19,7 +19,8 @@ function submitForm() {
             // Look for a matching username and password pair
             const userFound = data.find(user => user.username === username && user.password === password);
             if (userFound) {
-                alert("Login successful!");
+                // Redirect to the specified URL on successful login
+                window.location.href = "https://thecheesemister.github.io/storage-test/storage";
             } else {
                 alert("Invalid username or password.");
             }
