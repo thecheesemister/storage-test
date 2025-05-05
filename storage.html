@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload to storage-test</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; }
+    input[type="file"], button { display: block; margin: 1rem 0; }
+    #status { margin-top: 1rem; color: green; }
+    textarea { width: 100%; height: 150px; }
+  </style>
+</head>
+<body>
+  <h1>Upload File to GitHub Repo</h1>
+  <input type="file" id="fileInput" />
+  <button onclick="uploadFile()">Upload</button>
+  <div id="status"></div>
+  <textarea id="debugOutput" readonly></textarea>
+
+  <script>
+    const token = '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';
+    const username = 'thecheesemister';
+    const repo = 'storage-test';
+    const branch = 'main';
+
+    async function uploadFile() {
+      const fileInput = document.getElementById("fileInput");
+      const statusDiv = document.getElementById("status");
+      const debug = document.getElementById("debugOutput");
+
+      if (!fileInput.files.length) {
+        alert("Please select a file first.");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = async function(e) {
+        const base64 = e.target.result.split(',')[1];
+        const path = file.name;
+
+        const url = `https://api.github.com/repos/${username}/${repo}/contents/${path}`;
+
+        const payload = {
+          message: `Add ${file.name}`,
+          content: base64,
+          branch: branch
+        };
+
+        debug.value = `Uploading ${file.name} to ${repo}/${branch}...\nPayload:\n${JSON.stringify(payload, null, 2)}`;
+
+        const response = await fetch(url, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "Accept": "application/vnd.github.v3+json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          statusDiv.style.color = 'green';
+          statusDiv.textContent = `✅ Uploaded ${file.name} successfully.`;
+        } else {
+          statusDiv.style.color = 'red';
+          statusDiv.textContent = `❌ Error: ${result.message}`;
+          console.error(result);
+        }
+      };
+
+      reader.readAsDataURL(file);
+    }
+  </script>
+</body>
+</html>
