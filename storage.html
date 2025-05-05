@@ -1,103 +1,52 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <title>Upload File via GitHub Issue</title>
+  <title>Upload to GitHub via Vercel</title>
   <style>
-    body {
-      font-family: sans-serif;
-      max-width: 600px;
-      margin: 2rem auto;
-    }
-    input[type="file"], button {
-      display: block;
-      margin: 1rem 0;
-    }
-    #status {
-      margin-top: 1rem;
-    }
-    textarea {
-      width: 100%;
-      height: 150px;
-      margin-top: 1rem;
-    }
+    body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; }
+    input, button { display: block; margin: 1rem 0; }
+    #status { margin-top: 1rem; }
   </style>
 </head>
 <body>
-  <h1>Upload File to GitHub (via Issue)</h1>
-
-  <!-- 1️⃣ File picker -->
+  <h1>Upload File to GitHub</h1>
   <input type="file" id="fileInput" />
-
-  <!-- 2️⃣ Upload button -->
   <button id="uploadBtn">Upload</button>
-
-  <!-- 3️⃣ Status & debug output -->
   <div id="status"></div>
-  <textarea id="debugOutput" readonly placeholder="Debug output..."></textarea>
 
   <script>
-    // ── CONFIGURE ───────────────────────────────────────────────────────────────
-    const token     = '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';    // ← Replace with your PAT
-    const owner     = 'thecheesemister';
-    const repo      = 'storage-test';
-    const apiBase   = `https://api.github.com/repos/${owner}/${repo}`;
-    // ─────────────────────────────────────────────────────────────────────────────
-
-    document.getElementById('uploadBtn').addEventListener('click', async () => {
+    document.getElementById('uploadBtn').onclick = async () => {
       const fileInput = document.getElementById('fileInput');
-      const status    = document.getElementById('status');
-      const debug     = document.getElementById('debugOutput');
-
+      const status = document.getElementById('status');
       if (!fileInput.files.length) {
-        alert('Please choose a file first.');
+        alert('Please select a file.');
         return;
       }
 
-      const file = fileInput.files[0];
-      const reader = new FileReader();
+      const form = new FormData();
+      form.append('file', fileInput.files[0]);
 
-      reader.onload = async (e) => {
-        const base64 = e.target.result.split(',')[1];  // strip “data:…” header
-        const title = `Upload: ${file.name}`;
-        const body  = [
-          `### Filename: ${file.name}`,
-          `### Base64:`,
-          base64
-        ].join('\n');
+      status.textContent = 'Uploading…';
 
-        const payload = { title, body };
-
-        debug.value = `POST ${apiBase}/issues\n\n` + JSON.stringify(payload, null, 2);
-
-        try {
-          const res = await fetch(`${apiBase}/issues`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Accept':        'application/vnd.github.v3+json',
-              'Content-Type':  'application/json'
-            },
-            body: JSON.stringify(payload)
-          });
-
-          const json = await res.json();
-
-          if (res.ok) {
-            status.style.color = 'green';
-            status.textContent = `✅ Issue #${json.number} created — file will be uploaded shortly.`;
-          } else {
-            throw new Error(json.message || res.statusText);
-          }
-        } catch (err) {
-          status.style.color = 'red';
-          status.textContent = `❌ Error: ${err.message}`;
-          console.error(err);
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: form
+        });
+        const json = await res.json();
+        if (res.ok) {
+          status.style.color = 'green';
+          status.textContent = `✔️ Uploaded ${fileInput.files[0].name}`;
+        } else {
+          throw new Error(json.error || res.statusText);
         }
-      };
-
-      reader.readAsDataURL(file);
-    });
+      } catch (err) {
+        status.style.color = 'red';
+        status.textContent = `❌ ${err.message}`;
+        console.error(err);
+      }
+    };
   </script>
 </body>
 </html>
