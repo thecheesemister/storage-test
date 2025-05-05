@@ -1,0 +1,43 @@
+name: Upload File from Issue
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decode file and commit to repo
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issue = context.payload.issue;
+            const match = issue.body.match(/### Filename: (.+)\n### Base64:\n([\s\S]+)/);
+            if (!match) {
+              console.log("No valid file found.");
+              return;
+            }
+            const filename = match[1].trim();
+            const base64 = match[2].trim();
+
+            const content = base64;
+            const path = filename;
+
+            await github.rest.repos.createOrUpdateFileContents({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              path: path,
+              message: `Upload ${filename} from issue`,
+              content: content,
+              branch: "main",
+              committer: {
+                name: "AutoUploader",
+                email: "uploader@example.com"
+              },
+              author: {
+                name: "AutoUploader",
+                email: "uploader@example.com"
+              }
+            });
